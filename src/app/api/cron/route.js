@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { generatePreassignedBookings } from '../../../../services/allocationService';
-import { getNextWorkingDay } from '../../../../services/calendarService';
+import { generatePreassignedBookings } from '@/services/allocationService';
+import { getNextWorkingDay } from '@/services/calendarService';
 
 export async function POST(request) {
   try {
