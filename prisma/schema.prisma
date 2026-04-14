@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  name     String
+  email    String    @unique
+  squadId  Int
+  batchId  Int
+  bookings Booking[]
+}
+
+enum SeatType {
+  DESIGNATED
+  FLOATING
+}
+
+model Seat {
+  id       Int       @id @default(autoincrement())
+  type     SeatType
+  name     String    @unique // e.g., "D1", "F1"
+  bookings Booking[]
+}
+
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+}
+
+enum BookingType {
+  PREASSIGNED
+  BLOCKED
+}
+
+model Booking {
+  id        Int           @id @default(autoincrement())
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id])
+  seatId    Int
+  seat      Seat          @relation(fields: [seatId], references: [id])
+  date      DateTime      @db.Date // Storing just the date segment
+  status    BookingStatus @default(BOOKED)
+  type      BookingType
+  createdAt DateTime      @default(now())
+
+  // To prevent double booking, it's often better to rely on app logic
+  // if some records are marked CANCELLED, a strict DB constraint might fail.
+}
+
+model Holiday {
+  id   Int      @id @default(autoincrement())
+  date DateTime @unique @db.Date
+  name String?
+}
