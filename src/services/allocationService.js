@@ -27,7 +27,7 @@ export async function getUserWeeklyAllocation(userId, weekStartDate) {
     }
 
     const assignedBatch = getAssignedBatchForDate(currentDay);
-    const isDesignated = assignedBatch === user.batchId;
+    const isMyBatchDay = assignedBatch === user.batchId;
 
     const booking = await prisma.booking.findFirst({
       where: {
@@ -40,8 +40,9 @@ export async function getUserWeeklyAllocation(userId, weekStartDate) {
 
     allocation.push({
       date: dayStr,
-      status: booking ? 'BOOKED' : (isDesignated ? 'DESIGNATED' : 'NOT_BOOKED'),
-      isDesignated,
+      status: booking ? 'BOOKED' : (assignedBatch ? 'DESIGNATED' : 'NOT_BOOKED'),
+      isDesignated: assignedBatch !== null,
+      isMyBatchDay,
       assignedBatch,
       booking: booking ? { id: booking.id, seatName: booking.seat.name, type: booking.type } : null
     });

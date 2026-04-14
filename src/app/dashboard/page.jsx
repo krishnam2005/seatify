@@ -163,6 +163,7 @@ export default function Dashboard() {
           {allocation.map((day, idx) => {
             const dateObj = new Date(day.date);
             const isBooked = day.status === 'BOOKED';
+            const isMyBatchDay = day.isMyBatchDay;
             const isDesignated = day.isDesignated;
             const isHoliday = day.status === 'HOLIDAY';
             const isWeekend = day.status === 'WEEKEND';
@@ -175,8 +176,9 @@ export default function Dashboard() {
                 className={cn(
                   "relative p-5 rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group min-h-[220px]",
                   isBooked ? "bg-blue-950/20 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.1)]" :
-                  isDesignated ? "bg-emerald-950/20 border-emerald-500/20" :
+                  isMyBatchDay ? "bg-emerald-950/20 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.05)]" :
                   (isHoliday || isWeekend) ? "bg-zinc-900/40 border-white/5 opacity-70" :
+                  isDesignated ? "bg-purple-900/10 border-indigo-500/10" : 
                   "bg-purple-900/10 border-purple-500/20"
                 )}
               >
@@ -198,15 +200,17 @@ export default function Dashboard() {
                     <div className={cn(
                       "p-2 rounded-xl backdrop-blur-md shadow-inner",
                       isBooked ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
-                      isDesignated ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
+                      isMyBatchDay ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
                       isHoliday ? "bg-orange-500/20 text-orange-400 border border-orange-500/30" :
                       isWeekend ? "bg-zinc-800 text-zinc-500" :
+                      isDesignated ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" :
                       "bg-purple-500/20 text-purple-400 border border-purple-500/30"
                     )}>
                       {isBooked ? <CheckCircle2 className="w-5 h-5" /> : 
-                       isDesignated ? <CalendarIcon className="w-5 h-5" /> : 
+                       isMyBatchDay ? <CalendarIcon className="w-5 h-5" /> : 
                        isHoliday ? <PartyPopper className="w-5 h-5" /> :
                        isWeekend ? <CalendarOff className="w-5 h-5" /> :
+                       isDesignated ? <Info className="w-5 h-5" /> :
                        <CircleDashed className="w-5 h-5" />}
                     </div>
                   </div>
@@ -214,19 +218,20 @@ export default function Dashboard() {
                   {/* Status Flags */}
                   <div className="mb-4">
                      <span className={cn(
-                       "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border",
-                       isBooked ? "bg-blue-500/10 text-blue-300 border-blue-500/20" :
-                       isDesignated ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
-                       isHoliday ? "bg-orange-500/10 text-orange-300 border-orange-500/20" :
-                       isWeekend ? "bg-zinc-800 text-zinc-400 border-zinc-700" :
-                       "bg-purple-500/10 text-purple-300 border-purple-500/20"
-                     )}>
-                       {isBooked ? 'Reserved' : 
-                        isDesignated ? `Batch ${day.assignedBatch} • Designated` : 
-                        isHoliday ? 'Holiday' : 
-                        isWeekend ? 'Weekend' : 
-                        'Floating Day'}
-                     </span>
+                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border",
+                        isBooked ? "bg-blue-500/10 text-blue-300 border-blue-500/20" :
+                        isMyBatchDay ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" :
+                        isHoliday ? "bg-orange-500/10 text-orange-300 border-orange-500/20" :
+                        isWeekend ? "bg-zinc-800 text-zinc-400 border-zinc-700" :
+                        isDesignated ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20 shadow-sm" :
+                        "bg-purple-500/10 text-purple-300 border-purple-500/20"
+                      )}>
+                        {isBooked ? 'Reserved' : 
+                         isDesignated ? `Batch ${day.assignedBatch} • Designated` : 
+                         isHoliday ? 'Holiday' : 
+                         isWeekend ? 'Weekend' : 
+                         'Floating Day'}
+                      </span>
                   </div>
                 </div>
 
@@ -247,24 +252,29 @@ export default function Dashboard() {
                         </span>
                       </p>
                     </div>
-                  ) : isDesignated ? (
-                    <div className="flex flex-col space-y-1 text-emerald-400/80">
-                      <p className="text-xs uppercase tracking-wider font-semibold">Seat auto-assigned</p>
-                      <p className="text-[11px] text-zinc-500 leading-tight">Your specific seat is mapped by the system at 3 PM prior to this date.</p>
-                    </div>
-                  ) : (
-                     <div className="flex flex-col space-y-3">
-                        <p className="text-[11px] text-zinc-400 leading-tight">
-                           You can reserve an available floating seat or released designated seat for this day.
-                        </p>
-                        <Link 
-                          href={`/book?date=${dateObj.toISOString().split('T')[0]}`}
-                          className="w-full text-center px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 border border-purple-500/30 rounded-lg text-sm font-bold transition-colors"
-                        >
-                          Book Workspace
-                        </Link>
-                     </div>
-                  )}
+                    ) : isMyBatchDay ? (
+                      <div className="flex flex-col space-y-1 text-emerald-400/80">
+                        <p className="text-xs uppercase tracking-wider font-semibold">Seat auto-assigned</p>
+                        <p className="text-[11px] text-zinc-500 leading-tight">Your specific seat is mapped by the system at 3 PM prior to this date.</p>
+                      </div>
+                    ) : (
+                       <div className="flex flex-col space-y-3">
+                          <p className="text-[11px] text-zinc-400 leading-tight">
+                             {isDesignated ? `This is Batch ${day.assignedBatch}'s day. You can book a floating seat.` : 'Reserve an available floating seat or released designated seat for this day.'}
+                          </p>
+                          <Link 
+                            href={`/book?date=${dateObj.toISOString().split('T')[0]}`}
+                            className={cn(
+                              "w-full text-center px-4 py-2 border rounded-lg text-sm font-bold transition-all",
+                              isDesignated 
+                                ? "bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 border-indigo-500/30" 
+                                : "bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 border-purple-500/30"
+                            )}
+                          >
+                            Book Workspace
+                          </Link>
+                       </div>
+                    )}
                 </div>
               </motion.div>
             );
