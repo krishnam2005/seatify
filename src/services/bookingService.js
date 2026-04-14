@@ -104,6 +104,12 @@ export async function bookSeat(userId, seatId, targetDateInput) {
   });
   if (activeBookingsCount >= 50) throw new Error('Maximum capacity reached for this day');
 
+  const seat = await prisma.seat.findUnique({ where: { id: seatId } });
+  if (!seat) throw new Error('Seat not found');
+  if (seat.type !== 'FLOATING') {
+    throw new Error('Designated seats cannot be booked manually. They are auto-assigned by the system.');
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     const isTaken = await tx.booking.findFirst({
       where: {

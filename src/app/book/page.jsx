@@ -68,13 +68,11 @@ export default function BookSeat() {
   };
 
   const seats = seatData.seats || [];
-  const totalSeats = seats.length;
-  const availableSeats = seats.filter(s => !s.isBooked).length;
-  const bookedSeats = seats.filter(s => s.isBooked).length;
-  const floatingRemaining = seats.filter(s => s.type === 'FLOATING' && !s.isBooked).length;
-
-  const designatedSeats = seats.filter(s => s.type === 'DESIGNATED');
   const floatingSeats = seats.filter(s => s.type === 'FLOATING');
+  const availableFloatingSeats = floatingSeats.filter(s => !s.isBooked).length;
+  const bookedFloatingSeats = floatingSeats.filter(s => s.isBooked).length;
+  
+  const designatedSeats = seats.filter(s => s.type === 'DESIGNATED');
 
   const openConfirmModal = (seat) => {
     if (!seatData.canBook) return;
@@ -182,17 +180,17 @@ export default function BookSeat() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 text-center">
-                <p className="text-3xl font-bold font-mono text-emerald-400">{availableSeats}</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Available</p>
+                <p className="text-3xl font-bold font-mono text-emerald-400">{availableFloatingSeats}</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Available Floats</p>
               </div>
               <div className="bg-zinc-900/50 p-4 rounded-xl border border-white/5 text-center">
-                <p className="text-3xl font-bold font-mono text-red-400">{bookedSeats}</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Booked</p>
+                <p className="text-3xl font-bold font-mono text-red-400">{bookedFloatingSeats}</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-widest mt-1">Booked Floats</p>
               </div>
             </div>
-            <div className="bg-purple-500/5 p-4 rounded-xl border border-purple-500/10 flex justify-between items-center">
-               <span className="text-sm font-medium text-purple-200">Floating Seats left</span>
-               <span className="text-xl font-bold font-mono text-purple-400">{floatingRemaining}</span>
+            <div className="bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10 flex justify-between items-center">
+               <span className="text-sm font-medium text-emerald-200">Total Floating Capacity</span>
+               <span className="text-xl font-bold font-mono text-emerald-400">10</span>
             </div>
           </div>
 
@@ -200,21 +198,17 @@ export default function BookSeat() {
              <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4">Legend</h3>
              
              <div className="flex items-center gap-3">
-               <div className="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/50" />
-               <span className="text-sm text-zinc-400">Available</span>
-             </div>
-             <div className="flex items-center gap-3">
-               <div className="w-4 h-4 rounded bg-red-500/10 border border-red-500/30" />
-               <span className="text-sm text-zinc-400">Booked (Occupied)</span>
-             </div>
-             <div className="flex items-center gap-3">
-               <div className="w-4 h-4 rounded bg-blue-500/20 border border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.4)]" />
-               <span className="text-sm text-zinc-400">Your Seat</span>
-             </div>
-             <div className="flex items-center gap-3">
-               <div className="w-4 h-4 rounded bg-purple-500/20 border border-purple-500/40" />
-               <span className="text-sm text-zinc-400">Floating Seat</span>
-             </div>
+                <div className="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/50" />
+                <span className="text-sm text-zinc-400">Available Float (Green)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded bg-red-500/20 border border-red-500/50" />
+                <span className="text-sm text-zinc-400">Booked (Red)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded bg-blue-500/20 border border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.4)]" />
+                <span className="text-sm text-zinc-400">Your Seat (Blue)</span>
+              </div>
              <div className="flex items-center gap-3">
                <div className="w-4 h-4 rounded bg-zinc-800/50 border border-zinc-700/50 opacity-50" />
                <span className="text-sm text-zinc-400">Disabled / Not Allowed</span>
@@ -338,15 +332,18 @@ function Seat({ seat, canBook, onClick }) {
   const isAvailable = !seat.isBooked;
 
   // Determine interactivity
-  // Floating seats and RELEASED designated seats can be interactively booked manually.
-  const disabled = !canBook || isBooked || isMine;
+  // Per requirements:
+  // 1. "Your Seat" (Preassigned) -> Highlighted Blue, Non-clickable
+  // 2. Others Designated -> Disabled Grey, Non-clickable
+  // 3. Floating -> Clickable if available
+  const disabled = isMine || !isFloating || !canBook || isBooked;
 
   return (
     <motion.div 
       whileHover={!disabled ? { scale: 1.1, y: -2 } : {}}
       whileTap={!disabled ? { scale: 0.95 } : {}}
       onClick={!disabled ? onClick : undefined}
-      title={!isFloating ? (isMine ? "Your auto-assigned designated seat" : (isBooked ? "Occupied designated seat" : "Released Designated Seat (Available)")) : (disabled ? "Unavailable" : "Available Floating Seat")}
+      title={!isFloating ? (isMine ? "Your auto-assigned designated seat" : (isBooked ? "Occupied designated seat" : "Designated area (Auto-assigned users only)")) : (disabled ? (isBooked ? "Occupied" : "Unavailable") : "Available Floating Seat")}
       className={cn(
         "relative aspect-square flex items-center justify-center rounded-lg border font-mono text-xs font-bold transition-all",
         disabled ? "cursor-not-allowed" : "cursor-pointer",
@@ -355,20 +352,19 @@ function Seat({ seat, canBook, onClick }) {
         isMine && "bg-blue-500/20 text-blue-400 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)] z-10 ring-2 ring-blue-500/30",
         
         // Booked (By others)
-        isBooked && "bg-red-500/5 text-red-500/50 border-red-500/20 opacity-50",
+        isBooked && "bg-red-500/10 text-red-400 border-red-500/30 opacity-80",
         
-        // Disabled visually due to global constraints
-        (!canBook && !isBooked && !isMine) && "bg-zinc-800/30 text-emerald-600/30 border-zinc-700/50 opacity-40",
+        // Designated (Not booked, not mine) - Structural/Disabled for manual booking
+        (!isFloating && !isBooked && !isMine) && "bg-zinc-800/10 text-zinc-500 border-zinc-700/30 opacity-40",
+
+        // Disabled Floating seats visually due to global constraints
+        (isFloating && !canBook && !isBooked && !isMine) && "bg-zinc-800/30 text-emerald-600/30 border-zinc-700/50 opacity-40",
         
-        // Available (Floating or Released Designated) map (only visible cleanly if canBook)
-        (isAvailable && canBook) && (
-          isFloating 
-            ? "bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-500/50 hover:shadow-[0_0_10px_rgba(168,85,247,0.2)]" 
-            : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-        )
+        // Available Floating seats map (only visible cleanly if canBook)
+        (isFloating && isAvailable && canBook) && "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:shadow-[0_0_10px_rgba(16,185,129,0.2)]"
       )}
     >
-      {isBooked ? <XCircle className="w-4 h-4 opacity-50 shrink-0" /> : seat.name}
+      {isMine ? <Check className="w-4 h-4 text-blue-400 shadow-sm" /> : (isBooked ? <XCircle className="w-4 h-4 opacity-50 shrink-0" /> : seat.name)}
     </motion.div>
   );
 }
