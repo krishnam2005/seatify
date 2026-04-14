@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSeatMap } from '@/services/bookingService';
 
+export const dynamic = 'force-dynamic';
+
 import { getNextWorkingDay } from '@/services/calendarService';
 
 export async function GET(request) {

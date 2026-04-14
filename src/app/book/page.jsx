@@ -23,7 +23,7 @@ export default function BookSeat() {
     setLoading(true);
     try {
       const url = `/api/seats?userId=${uid}${selectedDate ? `&date=${selectedDate}` : ''}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
       const data = await res.json();
       if (data.resolvedDateStr) {
         setDate(data.resolvedDateStr);
