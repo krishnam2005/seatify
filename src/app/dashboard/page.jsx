@@ -222,7 +222,7 @@ export default function Dashboard() {
                        "bg-purple-500/10 text-purple-300 border-purple-500/20"
                      )}>
                        {isBooked ? 'Reserved' : 
-                        isDesignated ? 'Designated Batch' : 
+                        isDesignated ? `Batch ${day.assignedBatch} • Designated` : 
                         isHoliday ? 'Holiday' : 
                         isWeekend ? 'Weekend' : 
                         'Floating Day'}

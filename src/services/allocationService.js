@@ -42,6 +42,7 @@ export async function getUserWeeklyAllocation(userId, weekStartDate) {
       date: dayStr,
       status: booking ? 'BOOKED' : (isDesignated ? 'DESIGNATED' : 'NOT_BOOKED'),
       isDesignated,
+      assignedBatch,
       booking: booking ? { id: booking.id, seatName: booking.seat.name, type: booking.type } : null
     });
   }
