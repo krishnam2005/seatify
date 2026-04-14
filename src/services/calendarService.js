@@ -1,12 +1,26 @@
 import { addDays, isWeekend, format, differenceInCalendarWeeks, startOfWeek, isSameDay } from 'date-fns';
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import prisma from '../lib/prisma.js';
 
+// Enforce Centralized Timezone
+const IST_TIMEZONE = 'Asia/Kolkata';
+
+export function getISTNow() {
+  return toZonedTime(new Date(), IST_TIMEZONE);
+}
+
+// Convert an absolute boundary generic date into a flat UTC midnight structure representing the logical day bounds
+export function normalizeDate(date) {
+  const d = new Date(date);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
 // Reference date to determine Week 1 vs Week 2 (e.g. assume a past Monday as Week 1)
-const REF_DATE = new Date('2024-01-01');
+const REF_DATE = new Date('2024-01-01T00:00:00Z');
 
 export async function isHoliday(date) {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+  const startOfDay = normalizeDate(date);
 
   const holiday = await prisma.holiday.findUnique({
     where: { date: startOfDay },
@@ -19,9 +33,10 @@ export function isWorkingDay(date) {
   return !isWeekend(date);
 }
 
-export async function getNextWorkingDay(from = new Date()) {
-  let nextDate = addDays(from, 1);
-  nextDate.setHours(0, 0, 0, 0);
+export async function getNextWorkingDay(from) {
+  const baseDate = from ? normalizeDate(from) : normalizeDate(getISTNow());
+  let nextDate = addDays(baseDate, 1);
+  nextDate = normalizeDate(nextDate);
 
   while (!isWorkingDay(nextDate) || await isHoliday(nextDate)) {
     nextDate = addDays(nextDate, 1);

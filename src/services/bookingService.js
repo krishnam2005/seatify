@@ -1,9 +1,8 @@
 import prisma from '../lib/prisma.js';
-import { getNextWorkingDay, getAssignedBatchForDate, isHoliday } from './calendarService.js';
-import { startOfDay } from 'date-fns';
+import { getNextWorkingDay, getAssignedBatchForDate, isHoliday, getISTNow, normalizeDate } from './calendarService.js';
 
-export async function getSeatMap(date, userId) {
-  date.setHours(0, 0, 0, 0);
+export async function getSeatMap(dateInput, userId) {
+  const date = normalizeDate(dateInput);
 
   const allSeats = await prisma.seat.findMany({ orderBy: { id: 'asc' } });
   const activeBookings = await prisma.booking.findMany({
@@ -30,9 +29,8 @@ export async function getSeatMap(date, userId) {
   const assignedBatch = getAssignedBatchForDate(date);
   const isAssignedDay = assignedBatch === user.batchId;
 
-  const now = new Date();
-  const nextWorkingDay = await getNextWorkingDay(now);
-  nextWorkingDay.setHours(0, 0, 0, 0);
+  const nowIST = getISTNow();
+  const nextWorkingDay = await getNextWorkingDay(nowIST);
 
   let canBook = true;
   let blockReason = '';
@@ -45,7 +43,7 @@ export async function getSeatMap(date, userId) {
   } else if (date.getTime() > nextWorkingDay.getTime() || date.getTime() < nextWorkingDay.getTime()) {
     canBook = false;
     blockReason = 'Can only book for the next working day.';
-  } else if (now.getHours() < 15) {
+  } else if (nowIST.getHours() < 15) {
     canBook = false;
     blockReason = 'Booking opens after 3 PM for next working day.';
   } else if (isAssignedDay) {
@@ -64,24 +62,22 @@ export async function getSeatMap(date, userId) {
     isHoliday: isHolidayDate,
     canBook,
     blockReason,
-    isBefore3PM: now.getHours() < 15,
+    isBefore3PM: nowIST.getHours() < 15,
     nextWorkingDayStr: nextWorkingDay.toISOString().split('T')[0]
   };
 }
 
-export async function bookSeat(userId, seatId, targetDate) {
-  targetDate.setHours(0,0,0,0);
+export async function bookSeat(userId, seatId, targetDateInput) {
+  const targetDate = normalizeDate(targetDateInput);
   
-  const now = new Date();
-  
-  const nextWorkingDay = await getNextWorkingDay(now);
-  nextWorkingDay.setHours(0, 0, 0, 0);
+  const nowIST = getISTNow();
+  const nextWorkingDay = await getNextWorkingDay(nowIST);
 
   if (targetDate.getTime() > nextWorkingDay.getTime() || targetDate.getTime() < nextWorkingDay.getTime()) {
     throw new Error('Can only book for the immediate next working day');
   }
 
-  if (now.getHours() < 15) {
+  if (nowIST.getHours() < 15) {
       throw new Error('Booking window for the next working day opens at 3 PM.');
   }
 

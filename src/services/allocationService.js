@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { getAssignedBatchForDate, getNextWorkingDay, isHoliday, isWorkingDay } from './calendarService.js';
+import { getAssignedBatchForDate, getNextWorkingDay, isHoliday, isWorkingDay, normalizeDate } from './calendarService.js';
 import { startOfWeek, addDays, format } from 'date-fns';
 
 export async function getUserWeeklyAllocation(userId, weekStartDate) {
@@ -11,10 +11,10 @@ export async function getUserWeeklyAllocation(userId, weekStartDate) {
   const allocation = [];
 
   for (let i = 0; i < 5; i++) { // Mon to Fri
-    const currentDay = addDays(weekStart, i);
+    let currentDay = addDays(weekStart, i);
     const dayStr = format(currentDay, 'yyyy-MM-dd');
     
-    currentDay.setHours(0, 0, 0, 0);
+    currentDay = normalizeDate(currentDay);
 
     const isHoli = await isHoliday(currentDay);
     if (!isWorkingDay(currentDay) || isHoli) {
@@ -52,8 +52,8 @@ export async function getUserWeeklyAllocation(userId, weekStartDate) {
   };
 }
 
-export async function generatePreassignedBookings(date) {
-  date.setHours(0,0,0,0);
+export async function generatePreassignedBookings(dateInput) {
+  const date = normalizeDate(dateInput);
   
   if (!isWorkingDay(date) || await isHoliday(date)) {
     return { success: false, message: 'Not a working day or holiday' };

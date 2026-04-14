@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { generatePreassignedBookings } from '@/services/allocationService';
-import { getNextWorkingDay } from '@/services/calendarService';
+import { getNextWorkingDay, getISTNow } from '@/services/calendarService';
 
 export async function POST(request) {
   try {
-    const nextWorkingDay = await getNextWorkingDay(new Date());
+    const nextWorkingDay = await getNextWorkingDay(getISTNow());
     const result = await generatePreassignedBookings(nextWorkingDay);
     return NextResponse.json(result);
   } catch (error) {

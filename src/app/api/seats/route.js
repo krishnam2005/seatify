@@ -3,7 +3,7 @@ import { getSeatMap } from '@/services/bookingService';
 
 export const dynamic = 'force-dynamic';
 
-import { getNextWorkingDay } from '@/services/calendarService';
+import { getNextWorkingDay, getISTNow } from '@/services/calendarService';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -17,8 +17,7 @@ export async function GET(request) {
   try {
     let date;
     if (!dateStr) {
-      const now = new Date();
-      date = await getNextWorkingDay(now);
+      date = await getNextWorkingDay(getISTNow());
     } else {
       date = new Date(dateStr);
     }
